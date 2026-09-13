@@ -1,18 +1,19 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import {
   Inbox, ShieldAlert, FileText, Rss, Send, Settings,
   Search, PenSquare, Activity, Sparkles, Calendar,
   X, ChevronDown, Reply, ShieldCheck, Tag,
   Maximize2, EyeOff, Menu, ChevronLeft, Archive,
-  Trash2, Plus, Edit2, Database, Cpu, Network, Fingerprint, Lock
+  Trash2, Plus, Edit2, Database, Cpu, Network, Fingerprint, Lock, Check,
+  Mail, Cloud, LayoutList, Columns
 } from 'lucide-react';
 import { EmailThread, AccountOrigin, Workspace } from '../types';
 import { mockThreads } from '../data';
 
 export default function UMailWorkspace() {
   const [activeAccount, setActiveAccount] = useState<AccountOrigin | 'all'>('all');
-  const [activeFolder, setActiveFolder] = useState<'imbox' | 'screener' | 'paper-trail' | 'the-feed'>('imbox');
+  const [activeFolder, setActiveFolder] = useState<'inbox' | 'screener' | 'paper-trail' | 'the-feed'>('inbox');
   const [activeThreadId, setActiveThreadId] = useState<string | null>(null);
   const [dismissedAura, setDismissedAura] = useState<Record<string, boolean>>({});
   
@@ -35,6 +36,8 @@ export default function UMailWorkspace() {
   const [isComposing, setIsComposing] = useState(false);
   const [composeText, setComposeText] = useState('');
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isStatsMenuOpen, setIsStatsMenuOpen] = useState(false);
+  const [hasCompletedOnboarding, setHasCompletedOnboarding] = useState(false);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -226,7 +229,21 @@ export default function UMailWorkspace() {
             className="fixed inset-0 bg-[#0E0E10]/80 z-30 lg:hidden backdrop-blur-sm"
           />
         )}
+        {isStatsMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0 }} 
+            animate={{ opacity: 1 }} 
+            exit={{ opacity: 0 }} 
+            onClick={() => setIsStatsMenuOpen(false)}
+            className="fixed inset-0 bg-[#0E0E10]/80 z-30 lg:hidden backdrop-blur-sm"
+          />
+        )}
       </AnimatePresence>
+
+      {/* Stats Drawer */}
+      <div className={`fixed inset-y-0 right-0 z-40 transform ${isStatsMenuOpen ? 'translate-x-0' : 'translate-x-full'} transition-transform duration-300 ease-in-out w-4/5 max-w-[320px] bg-[#14161D] border-l border-[#232836] lg:hidden overflow-y-auto`}>
+        <CommandDashboard compact={true} />
+      </div>
 
       {/* Sidebars (Dock & Folders) */}
       <div className={`fixed inset-y-0 left-0 z-40 transform ${isMobileMenuOpen ? 'translate-x-0' : '-translate-x-full'} lg:translate-x-0 transition-transform duration-300 ease-in-out flex h-full lg:static shadow-2xl lg:shadow-none`}>
@@ -238,8 +255,13 @@ export default function UMailWorkspace() {
             <div className="absolute -inset-2 bg-gradient-to-tr from-[#DDA15E]/40 to-[#E07A5F]/40 rounded-full blur-xl opacity-0 group-hover:opacity-100 transition-opacity duration-700" />
             <div className="w-12 h-12 rounded-[14px] bg-gradient-to-br from-[#1A1D24] to-[#0E0E10] border border-[#232836] shadow-xl flex items-center justify-center relative overflow-hidden">
               <div className="absolute inset-0 bg-gradient-to-br from-white/10 to-transparent opacity-50" />
-              <div className="w-6 h-6 border-[3px] border-[#DDA15E] rounded-b-xl border-t-0 shadow-[0_4px_10px_rgba(221,161,94,0.3)] relative flex items-center justify-center">
-                <div className="w-1.5 h-1.5 bg-[#E07A5F] rounded-full absolute -top-1" />
+              
+              {/* Mixed U / Mail Shape */}
+              <div className="w-7 h-[22px] border-[2.5px] border-[#DDA15E] border-t-0 rounded-b-[10px] shadow-[0_4px_10px_rgba(221,161,94,0.3)] relative flex justify-center mt-1.5">
+                {/* Envelope Flap creating the top of the U */}
+                <div className="absolute top-0 w-[16px] h-[16px] border-b-[2.5px] border-r-[2.5px] border-[#E07A5F] rotate-45 origin-center -translate-y-[60%] rounded-[3px] shadow-[2px_2px_6px_rgba(224,122,95,0.3)]" />
+                {/* Security/Enclave Core Dot */}
+                <div className="absolute bottom-[2px] w-1 h-1 bg-[#DDA15E] rounded-full animate-pulse" />
               </div>
             </div>
           </div>
@@ -285,7 +307,7 @@ export default function UMailWorkspace() {
 
             <div className="space-y-1">
               <div className="px-3 text-[11px] font-bold tracking-wider text-gray-500 uppercase mb-2">Aura Screener</div>
-              <FolderNavItem label="Imbox" icon={<Inbox className="w-4 h-4" />} active={activeFolder === 'imbox'} onClick={() => { setActiveFolder('imbox'); setIsMobileMenuOpen(false); }} count={2} />
+              <FolderNavItem label="Inbox" icon={<Inbox className="w-4 h-4" />} active={activeFolder === 'inbox'} onClick={() => { setActiveFolder('inbox'); setIsMobileMenuOpen(false); }} count={2} />
               <FolderNavItem label="Screener" icon={<ShieldAlert className="w-4 h-4" />} active={activeFolder === 'screener'} onClick={() => { setActiveFolder('screener'); setIsMobileMenuOpen(false); }} />
               <FolderNavItem label="Paper Trail" icon={<FileText className="w-4 h-4" />} active={activeFolder === 'paper-trail'} onClick={() => { setActiveFolder('paper-trail'); setIsMobileMenuOpen(false); }} />
               <FolderNavItem label="The Feed" icon={<Rss className="w-4 h-4" />} active={activeFolder === 'the-feed'} onClick={() => { setActiveFolder('the-feed'); setIsMobileMenuOpen(false); }} />
@@ -297,7 +319,7 @@ export default function UMailWorkspace() {
       {/* Master Thread Index */}
       <motion.section 
         layout
-        className={`bg-[#0E0E10] border-r border-[#232836] flex flex-col z-10 shrink-0 w-full md:w-[320px] lg:w-[380px] ${activeThreadId ? 'hidden md:flex' : 'flex'}`}
+        className={`bg-[#0E0E10] border-r border-[#232836] flex flex-col z-10 shrink-0 ${activeThreadId ? 'w-full md:w-[320px] lg:w-[380px] hidden md:flex' : 'w-full md:flex-1'}`}
       >
         <div className="h-16 flex items-center px-4 border-b border-[#232836] gap-3 shrink-0">
           <button className="lg:hidden text-gray-400 hover:text-white transition-colors" onClick={() => setIsMobileMenuOpen(true)}>
@@ -311,6 +333,9 @@ export default function UMailWorkspace() {
               className="w-full bg-[#181A22] border border-[#232836] rounded-[14px] py-1.5 pl-9 pr-4 text-sm text-gray-200 focus:outline-none focus:border-[#DDA15E] transition-colors placeholder:text-gray-600"
             />
           </div>
+          <button className="lg:hidden text-gray-400 hover:text-white transition-colors shrink-0" onClick={() => setIsStatsMenuOpen(true)}>
+            <Activity className="w-5 h-5" />
+          </button>
         </div>
         
         {/* Workspaces Tab Bar */}
@@ -675,7 +700,7 @@ export default function UMailWorkspace() {
 
         {/* Right Sidebar: Command Dashboard (30% of right side) */}
         <AnimatePresence>
-          {!isComposing && (
+          {!activeThreadId && (
             <motion.aside
               initial={{ width: 0, opacity: 0, borderLeftWidth: 0 }}
               animate={{ width: '30%', opacity: 1, borderLeftWidth: 1 }}
@@ -691,15 +716,23 @@ export default function UMailWorkspace() {
         </AnimatePresence>
 
       </main>
+      
+      {/* First Time Onboarding Flow */}
+      <AnimatePresence>
+        {!hasCompletedOnboarding && (
+          <OnboardingFlow onComplete={() => setHasCompletedOnboarding(true)} />
+        )}
+      </AnimatePresence>
+
     </div>
   );
 }
 
 /* Subcomponents */
 
-function CommandDashboard() {
+function CommandDashboard({ compact = false }: { compact?: boolean }) {
   return (
-    <div className="w-full p-6 space-y-6">
+    <div className={`w-full ${compact ? 'p-4 space-y-4' : 'p-6 space-y-6'}`}>
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-sm font-semibold text-gray-200 uppercase tracking-wider">Enclave Stats</h2>
         <div className="flex items-center gap-1.5 bg-[#52B788]/10 text-[#52B788] px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide">
@@ -708,95 +741,92 @@ function CommandDashboard() {
         </div>
       </div>
 
-      <div className="flex flex-col gap-4">
+      <div className={`flex ${compact ? 'flex-col gap-3' : 'flex-col gap-4'}`}>
         {/* Aura AI Stats */}
-        <div className="bg-[#181A22] border border-[#232836] rounded-[16px] p-4 flex flex-col justify-between hover:border-[#7E78D2]/50 transition-colors group">
-          <div className="flex items-start justify-between mb-4">
-            <div className="w-8 h-8 rounded-[10px] bg-[#7E78D2]/10 flex items-center justify-center text-[#7E78D2]">
-              <Cpu className="w-4 h-4" />
+        <div className={`bg-[#181A22] border border-[#232836] rounded-[16px] flex flex-col justify-between hover:border-[#7E78D2]/50 transition-colors group ${compact ? 'p-3' : 'p-4'}`}>
+          <div className="flex items-start justify-between mb-2">
+            <div className={`${compact ? 'w-6 h-6 rounded-[8px]' : 'w-8 h-8 rounded-[10px]'} bg-[#7E78D2]/10 flex items-center justify-center text-[#7E78D2]`}>
+              <Cpu className={compact ? "w-3 h-3" : "w-4 h-4"} />
             </div>
-            <Sparkles className="w-3 h-3 text-gray-600 group-hover:text-[#7E78D2] transition-colors" />
+            {!compact && <Sparkles className="w-3 h-3 text-gray-600 group-hover:text-[#7E78D2] transition-colors" />}
           </div>
           <div>
-            <div className="text-2xl font-light text-gray-200 mb-0.5">1,204</div>
-            <div className="text-xs font-medium text-[#7E78D2]">Trackers Stripped</div>
+            <div className={`${compact ? 'text-xl' : 'text-2xl'} font-light text-gray-200 mb-0.5`}>1,204</div>
+            <div className="text-[10px] font-medium text-[#7E78D2] uppercase tracking-wider">Trackers Stripped</div>
           </div>
         </div>
 
         {/* Local Vault Storage */}
-        <div className="bg-[#181A22] border border-[#232836] rounded-[16px] p-4 flex flex-col justify-between hover:border-[#DDA15E]/50 transition-colors group">
-          <div className="flex items-start justify-between mb-4">
-            <div className="w-8 h-8 rounded-[10px] bg-[#DDA15E]/10 flex items-center justify-center text-[#DDA15E]">
-              <Database className="w-4 h-4" />
+        <div className={`bg-[#181A22] border border-[#232836] rounded-[16px] flex flex-col justify-between hover:border-[#DDA15E]/50 transition-colors group ${compact ? 'p-3' : 'p-4'}`}>
+          <div className="flex items-start justify-between mb-2">
+            <div className={`${compact ? 'w-6 h-6 rounded-[8px]' : 'w-8 h-8 rounded-[10px]'} bg-[#DDA15E]/10 flex items-center justify-center text-[#DDA15E]`}>
+              <Database className={compact ? "w-3 h-3" : "w-4 h-4"} />
             </div>
-            <Lock className="w-3 h-3 text-gray-600 group-hover:text-[#DDA15E] transition-colors" />
+            {!compact && <Lock className="w-3 h-3 text-gray-600 group-hover:text-[#DDA15E] transition-colors" />}
           </div>
           <div>
-            <div className="text-2xl font-light text-gray-200 mb-0.5">1.4 <span className="text-sm text-gray-500">GB</span></div>
-            <div className="text-xs font-medium text-[#DDA15E]">AES-256 Vault</div>
-            <div className="w-full bg-[#0E0E10] h-1.5 rounded-full mt-3 overflow-hidden">
-              <div className="bg-[#DDA15E] w-[28%] h-full rounded-full" />
-            </div>
+            <div className={`${compact ? 'text-xl' : 'text-2xl'} font-light text-gray-200 mb-0.5`}>1.4 <span className="text-sm text-gray-500">GB</span></div>
+            <div className="text-[10px] font-medium text-[#DDA15E] uppercase tracking-wider">AES-256 Vault</div>
+            {!compact && (
+              <div className="w-full bg-[#0E0E10] h-1.5 rounded-full mt-3 overflow-hidden">
+                <div className="bg-[#DDA15E] w-[28%] h-full rounded-full" />
+              </div>
+            )}
           </div>
         </div>
 
         {/* Bridge Status */}
-        <div className="bg-[#181A22] border border-[#232836] rounded-[16px] p-4 flex flex-col justify-between hover:border-[#4A6FA5]/50 transition-colors group">
-          <div className="flex items-start justify-between mb-4">
-            <div className="w-8 h-8 rounded-[10px] bg-[#4A6FA5]/10 flex items-center justify-center text-[#4A6FA5]">
-              <Network className="w-4 h-4" />
+        <div className={`bg-[#181A22] border border-[#232836] rounded-[16px] flex flex-col justify-between hover:border-[#4A6FA5]/50 transition-colors group ${compact ? 'p-3' : 'p-4'}`}>
+          <div className="flex items-start justify-between mb-2">
+            <div className={`${compact ? 'w-6 h-6 rounded-[8px]' : 'w-8 h-8 rounded-[10px]'} bg-[#4A6FA5]/10 flex items-center justify-center text-[#4A6FA5]`}>
+              <Network className={compact ? "w-3 h-3" : "w-4 h-4"} />
             </div>
-            <Settings className="w-3 h-3 text-gray-600 group-hover:text-[#4A6FA5] transition-colors" />
+            {!compact && <Settings className="w-3 h-3 text-gray-600 group-hover:text-[#4A6FA5] transition-colors" />}
           </div>
-          <div className="space-y-3">
+          <div className="space-y-2">
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs text-gray-300">
+              <div className="flex items-center gap-2 text-[11px] text-gray-300">
                 <div className="w-1.5 h-1.5 rounded-full bg-[#52B788]" />
                 Gmail
               </div>
-              <span className="text-[10px] text-gray-500">Synced 2m</span>
+              <span className="text-[9px] text-gray-500 uppercase">Synced</span>
             </div>
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs text-gray-300">
+              <div className="flex items-center gap-2 text-[11px] text-gray-300">
                 <div className="w-1.5 h-1.5 rounded-full bg-[#DDA15E]" />
                 Outlook
               </div>
-              <span className="text-[10px] text-[#DDA15E]">Syncing</span>
-            </div>
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs text-gray-300">
-                <div className="w-1.5 h-1.5 rounded-full bg-[#52B788]" />
-                Sovereign
-              </div>
-              <span className="text-[10px] text-gray-500">Connected</span>
+              <span className="text-[9px] text-[#DDA15E] uppercase">Syncing</span>
             </div>
           </div>
         </div>
         
         {/* Security Events */}
-        <div className="mt-2">
-          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Recent Events</h3>
-          <div className="space-y-3">
-            <div className="flex items-center gap-3 text-sm">
-              <div className="w-6 h-6 rounded-full bg-[#52B788]/10 flex items-center justify-center text-[#52B788] shrink-0">
-                <Fingerprint className="w-3 h-3" />
+        {!compact && (
+          <div className="mt-2">
+            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-3">Recent Events</h3>
+            <div className="space-y-3">
+              <div className="flex items-center gap-3 text-sm">
+                <div className="w-6 h-6 rounded-full bg-[#52B788]/10 flex items-center justify-center text-[#52B788] shrink-0">
+                  <Fingerprint className="w-3 h-3" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-gray-200 text-xs truncate">Biometric Handshake</div>
+                  <div className="text-[10px] text-gray-500 truncate">Device MAC: 8A:3B:...</div>
+                </div>
               </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-gray-200 text-xs truncate">Biometric Handshake</div>
-                <div className="text-[10px] text-gray-500 truncate">Device MAC: 8A:3B:...</div>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 text-sm">
-              <div className="w-6 h-6 rounded-full bg-[#E07A5F]/10 flex items-center justify-center text-[#E07A5F] shrink-0">
-                <EyeOff className="w-3 h-3" />
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-gray-200 text-xs truncate">Quarantine: Suspicious</div>
-                <div className="text-[10px] text-gray-500 truncate">invoice_urgent.pdf</div>
+              <div className="flex items-center gap-3 text-sm">
+                <div className="w-6 h-6 rounded-full bg-[#E07A5F]/10 flex items-center justify-center text-[#E07A5F] shrink-0">
+                  <EyeOff className="w-3 h-3" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="text-gray-200 text-xs truncate">Quarantine: Suspicious</div>
+                  <div className="text-[10px] text-gray-500 truncate">invoice_urgent.pdf</div>
+                </div>
               </div>
             </div>
           </div>
-        </div>
+        )}
 
       </div>
     </div>
@@ -951,5 +981,257 @@ function AccordionThread({ messages }: { messages: any[] }) {
         })}
       </AnimatePresence>
     </div>
+  );
+}
+
+/* Brand SVGs */
+const BrandGmail = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M24 5.457v13.909c0 .904-.732 1.636-1.636 1.636h-3.819V11.73L12 16.64l-6.545-4.91v9.273H1.636A1.636 1.636 0 0 1 0 19.366V5.457c0-2.023 2.309-3.178 3.927-1.964L5.455 4.64 12 9.548l6.545-4.91 1.528-1.145C21.69 2.28 24 3.434 24 5.457z" />
+  </svg>
+);
+
+const BrandOutlook = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M1 3.5 11 1v22l-10-2.5V3.5zM23 4.5l-10-1.5v18l10-1.5V4.5z" opacity="0.6"/>
+    <path d="M7 9v6h2v-4h1v4h2V9H7zm11 1.5v3h-2v-3h-1.5v-2H18V7l2-1v2.5h1.5v2H18z" />
+  </svg>
+);
+
+const BrandYahoo = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M16.92 2H23l-7.64 11.23L15 22h-5.26l.16-8.54L2.09 2h5.81l4.89 7.78L16.92 2z" />
+  </svg>
+);
+
+const BrandApple = ({ className }: { className?: string }) => (
+  <svg viewBox="0 0 24 24" fill="currentColor" className={className}>
+    <path d="M16.8 9.9c-.1-3.2 2.6-4.7 2.7-4.8-1.5-2.2-3.8-2.5-4.6-2.6-2-.2-3.8 1.2-4.8 1.2-1 0-2.6-1.1-4.2-1.1-2.1 0-4 1.2-5 3C-1.3 11 1 18.2 2.9 21c1 1.4 2 2.9 3.5 2.9 1.4 0 2-1 3.7-1 1.7 0 2.2 1 3.7 1 1.6 0 2.5-1.4 3.4-2.8 1.1-1.6 1.6-3.2 1.6-3.3-.1-.1-2.9-1.1-2.9-4.8" />
+    <path d="M15.1 4.5c.8-1 1.3-2.3 1.1-3.6-1.1 0-2.5.6-3.4 1.6-.7.8-1.3 2.1-1.1 3.4 1.3.1 2.6-.5 3.4-1.4" />
+  </svg>
+);
+
+function OnboardingFlow({ onComplete }: { onComplete: () => void }) {
+  const [step, setStep] = useState(1);
+  const [selectedSyncs, setSelectedSyncs] = useState<string[]>([]);
+  
+  const os = useMemo(() => {
+    if (typeof window === 'undefined') return 'Unknown';
+    const ua = window.navigator.userAgent;
+    if (ua.includes('Mac')) return 'macOS';
+    if (ua.includes('Win')) return 'Windows';
+    if (ua.includes('Linux')) return 'Linux';
+    if (/Android/.test(ua)) return 'Android';
+    if (/iPhone|iPad|iPod/.test(ua)) return 'iOS';
+    return 'Unknown';
+  }, []);
+
+  const handleNext = () => {
+    if (step < 3) setStep(step + 1);
+    else onComplete();
+  };
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0 }}
+      animate={{ opacity: 1 }}
+      exit={{ opacity: 0, scale: 1.05 }}
+      transition={{ duration: 0.4 }}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[#0E0E10] p-4 sm:p-8"
+    >
+      <div className="absolute inset-0 bg-[radial-gradient(ellipse_at_center,_var(--tw-gradient-stops))] from-[#181A22] via-[#0E0E10] to-[#0E0E10] pointer-events-none" />
+      
+      <motion.div 
+        layout
+        className="w-full max-w-2xl bg-[#14161D] border border-[#232836] rounded-[24px] shadow-2xl relative overflow-hidden flex flex-col min-h-[500px]"
+      >
+        <AnimatePresence mode="popLayout">
+          {step === 1 && (
+            <motion.div 
+              key="step-1"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="flex-1 p-8 md:p-12 flex flex-col"
+            >
+              <div className="mb-8">
+                <div className="w-12 h-12 rounded-[14px] bg-gradient-to-br from-[#DDA15E] to-[#E07A5F] flex items-center justify-center text-white font-bold text-2xl mb-6 shadow-[0_0_15px_rgba(221,161,94,0.3)]">u</div>
+                <h1 className="text-3xl font-light text-white mb-2">Welcome to Sovereign Mail</h1>
+                <p className="text-gray-400">Connect your external bridges. uMail will securely sync and encrypt your history locally.</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
+                {[
+                  { id: 'Gmail', icon: BrandGmail, color: '#EA4335' },
+                  { id: 'Outlook', icon: BrandOutlook, color: '#0078D4' },
+                  { id: 'Yahoo', icon: BrandYahoo, color: '#6001D2' },
+                  { id: 'iCloud', icon: BrandApple, color: '#3693F3' }
+                ].map(provider => {
+                  const isSelected = selectedSyncs.includes(provider.id);
+                  const Icon = provider.icon;
+                  return (
+                    <button 
+                      key={provider.id}
+                      onClick={() => setSelectedSyncs(prev => prev.includes(provider.id) ? prev.filter(p => p !== provider.id) : [...prev, provider.id])}
+                      className={`p-5 rounded-[16px] border text-left transition-all flex items-center gap-4 group ${isSelected ? 'bg-[#181A22] border-[#52B788] shadow-[0_0_15px_rgba(82,183,136,0.1)]' : 'bg-[#181A22] border-[#232836] hover:border-gray-500'}`}
+                    >
+                      <div className="w-10 h-10 rounded-[10px] flex items-center justify-center shrink-0 transition-colors" style={{ backgroundColor: isSelected ? provider.color : '#232836', color: isSelected ? '#ffffff' : '#9ca3af' }}>
+                        <Icon className="w-5 h-5" />
+                      </div>
+                      <div className="flex-1">
+                        <span className={`font-medium block text-lg ${isSelected ? 'text-[#52B788]' : 'text-gray-300'}`}>{provider.id}</span>
+                        <span className="text-xs text-gray-500">{isSelected ? 'Sync queued' : 'Click to connect'}</span>
+                      </div>
+                      <div className={`w-6 h-6 rounded-full border flex items-center justify-center transition-colors shrink-0 ${isSelected ? 'bg-[#52B788] border-[#52B788]' : 'border-gray-600'}`}>
+                        {isSelected && <Check className="w-4 h-4 text-[#0E0E10] font-bold" />}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+
+              <div className="mt-8 flex justify-end">
+                <button 
+                  onClick={handleNext}
+                  className="px-8 py-3 rounded-[14px] bg-[#DDA15E] text-[#0E0E10] font-bold shadow-lg hover:shadow-[0_0_20px_rgba(221,161,94,0.4)] transition-all active:scale-95"
+                >
+                  {selectedSyncs.length > 0 ? 'Sync Selected' : 'Skip & Continue'}
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {step === 2 && (
+            <motion.div 
+              key="step-2"
+              initial={{ opacity: 0, x: 20 }}
+              animate={{ opacity: 1, x: 0 }}
+              exit={{ opacity: 0, x: -20 }}
+              className="flex-1 p-8 md:p-12 flex flex-col"
+            >
+              <div className="mb-8">
+                <h1 className="text-3xl font-light text-white mb-2">Architect your Enclave</h1>
+                <p className="text-gray-400">How would you like your mail organized?</p>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 flex-1">
+                {/* Unified Stream */}
+                <button onClick={handleNext} className="w-full flex flex-col rounded-[20px] border border-[#232836] bg-[#181A22] hover:border-[#DDA15E]/50 hover:bg-[#1c1f28] transition-all text-left group overflow-hidden h-full">
+                  <div className="p-6 bg-[#14161D] border-b border-[#232836] flex-1 flex flex-col justify-end min-h-[140px] relative overflow-hidden">
+                    {/* Abstract Unified Stream Animation */}
+                    <div className="absolute inset-0 p-4 flex flex-col gap-2 opacity-50 group-hover:opacity-100 transition-opacity">
+                      {[1, 2, 3, 4].map(i => (
+                        <motion.div 
+                          key={i} 
+                          animate={{ y: [0, -4, 0] }} 
+                          transition={{ repeat: Infinity, duration: 3, delay: i * 0.2 }} 
+                          className="h-8 w-full bg-[#232836] rounded-[8px] flex items-center px-3 gap-2 shrink-0 shadow-sm border border-[#32394d]"
+                        >
+                          <div className={`w-3 h-3 rounded-full ${i === 1 ? 'bg-[#EA4335]' : i === 2 ? 'bg-[#0078D4]' : 'bg-[#6001D2]'}`} />
+                          <div className="h-1.5 w-1/2 bg-gray-500 rounded-full opacity-50" />
+                        </motion.div>
+                      ))}
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#14161D] to-transparent z-10" />
+                  </div>
+                  <div className="p-6 shrink-0 bg-[#181A22] z-20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <LayoutList className="w-5 h-5 text-gray-400 group-hover:text-[#DDA15E] transition-colors" />
+                      <h3 className="text-lg font-medium text-white group-hover:text-[#DDA15E] transition-colors">Unified Stream</h3>
+                    </div>
+                    <p className="text-sm text-gray-500 leading-relaxed">All identities and bridges flow into a single, chronologically sorted master list. Perfect for quick triaging.</p>
+                  </div>
+                </button>
+
+                {/* Categorized Workspaces */}
+                <button onClick={handleNext} className="w-full flex flex-col rounded-[20px] border border-[#232836] bg-[#181A22] hover:border-[#DDA15E]/50 hover:bg-[#1c1f28] transition-all text-left group overflow-hidden h-full">
+                  <div className="p-6 bg-[#14161D] border-b border-[#232836] flex-1 flex flex-col min-h-[140px] relative overflow-hidden">
+                    {/* Abstract Categorized Workspaces Animation */}
+                    <div className="absolute inset-0 p-4 flex flex-col gap-3 opacity-50 group-hover:opacity-100 transition-opacity">
+                      <div className="flex gap-2 border-b border-[#232836] pb-2 shrink-0">
+                        <motion.div animate={{ backgroundColor: ['#232836', '#32394d', '#232836'] }} transition={{ repeat: Infinity, duration: 4 }} className="h-5 w-16 bg-[#32394d] rounded-full border border-[#4a5568]" />
+                        <div className="h-5 w-16 bg-[#232836] rounded-full" />
+                        <div className="h-5 w-16 bg-[#232836] rounded-full" />
+                      </div>
+                      <div className="flex flex-col gap-2">
+                        {[1, 2].map(i => (
+                          <motion.div 
+                            key={i} 
+                            animate={{ opacity: [0.6, 1, 0.6] }} 
+                            transition={{ repeat: Infinity, duration: 2, delay: i * 0.3 }} 
+                            className="h-8 w-full bg-[#232836] rounded-[8px] flex items-center px-3 gap-2 shrink-0"
+                          >
+                            <div className="w-3 h-3 rounded-full bg-[#52B788]" />
+                            <div className="h-1.5 w-3/4 bg-gray-500 rounded-full opacity-50" />
+                          </motion.div>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="absolute bottom-0 left-0 right-0 h-16 bg-gradient-to-t from-[#14161D] to-transparent z-10" />
+                  </div>
+                  <div className="p-6 shrink-0 bg-[#181A22] z-20">
+                    <div className="flex items-center gap-2 mb-2">
+                      <Columns className="w-5 h-5 text-gray-400 group-hover:text-[#DDA15E] transition-colors" />
+                      <h3 className="text-lg font-medium text-white group-hover:text-[#DDA15E] transition-colors">Categorized Workspaces</h3>
+                    </div>
+                    <p className="text-sm text-gray-500 leading-relaxed">Strictly segregate contexts (Primary, Social, Finance) into isolated tabs. Best for compartmentalized deep work.</p>
+                  </div>
+                </button>
+              </div>
+            </motion.div>
+          )}
+
+          {step === 3 && (
+            <motion.div 
+              key="step-3"
+              initial={{ opacity: 0, scale: 0.9 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 1.1 }}
+              className="flex-1 p-8 md:p-12 flex flex-col items-center justify-center text-center relative"
+            >
+              <div className="absolute inset-0 overflow-hidden pointer-events-none flex justify-center items-center">
+                <motion.div 
+                  initial={{ scale: 0, opacity: 1 }}
+                  animate={{ scale: 2, opacity: 0 }}
+                  transition={{ duration: 1, ease: "easeOut" }}
+                  className="w-40 h-40 bg-[#52B788] rounded-full blur-3xl absolute"
+                />
+              </div>
+
+              <motion.div 
+                initial={{ scale: 0 }}
+                animate={{ scale: 1 }}
+                transition={{ type: "spring", damping: 12, delay: 0.2 }}
+                className="w-20 h-20 rounded-full bg-[#52B788]/20 flex items-center justify-center mb-6 relative z-10"
+              >
+                <Check className="w-10 h-10 text-[#52B788]" />
+              </motion.div>
+              
+              <h1 className="text-4xl font-light text-white mb-3 relative z-10">Boom! You're in.</h1>
+              <p className="text-lg text-gray-400 mb-8 max-w-md relative z-10">Your zero-knowledge enclave is configured and syncing securely.</p>
+              
+              {os !== 'Unknown' && os !== 'iOS' && os !== 'Android' && (
+                <div className="bg-[#181A22] border border-[#232836] rounded-[16px] p-5 w-full max-w-sm mb-8 relative z-10 flex items-center justify-between">
+                  <div>
+                    <div className="text-sm font-medium text-gray-200">Native Desktop App</div>
+                    <div className="text-xs text-gray-500">Hardware-level encryption for {os}</div>
+                  </div>
+                  <button className="px-4 py-2 bg-[#232836] hover:bg-[#32394d] text-white text-xs font-bold rounded-[10px] transition-colors">
+                    Download
+                  </button>
+                </div>
+              )}
+
+              <button 
+                onClick={handleNext}
+                className="px-10 py-4 rounded-[16px] bg-gradient-to-r from-[#DDA15E] to-[#E07A5F] text-[#0E0E10] font-bold shadow-[0_0_20px_rgba(221,161,94,0.3)] hover:shadow-[0_0_30px_rgba(221,161,94,0.5)] transition-all active:scale-95 text-lg relative z-10"
+              >
+                Enter Workspace
+              </button>
+            </motion.div>
+          )}
+        </AnimatePresence>
+      </motion.div>
+    </motion.div>
   );
 }

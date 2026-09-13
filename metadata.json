@@ -1,0 +1,6 @@
+{
+  "name": "uMail with Aura AI",
+  "description": "Zero-Knowledge Multi-Account Bridge with local AI enhancements, dual-view architecture, and cryptographic watermarking.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
